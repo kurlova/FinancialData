@@ -1,0 +1,11 @@
+table {
+    width: auto !important;
+}
+
+.error {
+    color: red;
+}
+
+#date-form {
+    width: 300px !important;
+}

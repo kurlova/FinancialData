@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <h3>Разница показателей акции {{ ticker.name }} за {{ first.date | datetimeformat }} и {{ second.date | datetimeformat }}</h3>
+    <table class="table table-striped table-bordered table-hover table-sm">
+        <thead>
+        <tr>
+            <td>Date</td>
+            <td>Open</td>
+            <td>High</td>
+            <td>Low</td>
+            <td>Close / Last</td>
+            <td>Volume</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>{{ first.date | datetimeformat }}</td>
+            <td>{{ first.open }}</td>
+            <td>{{ first.high }}</td>
+            <td>{{ first.low }}</td>
+            <td>{{ first.close }}</td>
+            <td>{{ first.volume }}</td>
+        </tr>
+        <tr>
+            <td>{{ second.date | datetimeformat }}</td>
+            <td>{{ second.open }}</td>
+            <td>{{ second.high }}</td>
+            <td>{{ second.low }}</td>
+            <td>{{ second.close }}</td>
+            <td>{{ second.volume }}</td>
+        </tr>
+        <tr class="table-info">
+            <td></td>
+            <td>{{ (first.open - second.open) | round(2, "common") | abs }}</td>
+            <td>{{ (first.high - second.high) | round(2, "common") | abs }}</td>
+            <td>{{ (first.low - second.low) | round(2, "common") | abs }}</td>
+            <td>{{ (first.close - second.close) | round(2, "common") | abs }}</td>
+            <td>{{ (first.volume - second.volume) | abs }}</td>
+        </tr>
+        </tbody>
+    </table>
+{% endblock %}

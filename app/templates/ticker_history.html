@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+    <h3>Профиль {{ ticker.name }}</h3>
+    <a href="{{ url_for('insiders', ticker_name=ticker.name) }}">К списку инсайдеров ></a>
+    <h4>Аналитика</h4>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flash-messages">
+                {% for message in messages %}
+                    <li class="error">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <form action="" method="post" id="date-form">
+        <div>
+            {{ date_form.hidden_tag() }}
+            {{ date_form.start_date.label }}
+            {{ date_form.start_date(class="form-control") }}
+            {% for error in date_form.start_date.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div>
+            {{ date_form.end_date.label }}
+            {{ date_form.end_date(class="form-control") }}
+            {% for error in date_form.end_date.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+        {{ date_form.submit }}
+    </form>
+
+    <form action="" method="post" id="delta-form">
+    <div>
+        {{ delta_form.hidden_tag() }}
+        {{ delta_form.value.label }}
+        {{ delta_form.value }}
+        {{ delta_form.type.label }}
+        {{ delta_form.type }}
+        {{ delta_form.submit }}
+    </div>
+    </form>
+
+    <h4>История</h4>
+    <table class="table table-striped table-bordered table-hover table-sm">
+        <thead>
+        <tr>
+            <td>Date</td>
+            <td>Open</td>
+            <td>High</td>
+            <td>Low</td>
+            <td>Close / Last</td>
+            <td>Volume</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in history %}
+            <tr>
+                <td>{{ row.date | datetimeformat }}</td>
+                <td>{{ row.open }}</td>
+                <td>{{ row.high }}</td>
+                <td>{{ row.low }}</td>
+                <td>{{ row.close }}</td>
+                <td>{{ row.volume }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

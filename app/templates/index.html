@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <h3>Доступные акции</h3>
+    <ul>
+    {% for ticker in tickers %}
+        <li><a href="{{ url_for("ticker", ticker_name=ticker.name) }}">{{ ticker.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% endblock %}
