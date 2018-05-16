@@ -18,7 +18,8 @@ class DateForm(FlaskForm):
 
 
 class DeltaForm(FlaskForm):
-    value = IntegerField("Изменение цены")
+    value = IntegerField("Изменение цены", validators=[validators.InputRequired(message="Введите число")],
+                         render_kw={"placeholder": "Введите число"})
     type = SelectField("Выберите тип",
                         choices=[("open", "Open"), ("high", "High"), ("low", "Low"), ("close", "Close")])
     submit = SubmitField("Отправить")

@@ -1,10 +1,8 @@
 import datetime
 from unittest import TestCase
-from unittest.mock import patch
 from freezegun import freeze_time
 
-from scraper import BaseScraper, ScrapingManager
-from app.models import Ticker
+from scraper import BaseScraper
 
 
 class TestBaseScraper(TestCase):

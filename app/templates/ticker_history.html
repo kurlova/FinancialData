@@ -16,35 +16,9 @@
         {% endif %}
     {% endwith %}
 
-    <form action="" method="post" id="date-form">
-        <div>
-            {{ date_form.hidden_tag() }}
-            {{ date_form.start_date.label }}
-            {{ date_form.start_date(class="form-control") }}
-            {% for error in date_form.start_date.errors %}
-                <span class="error">{{ error }}</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ date_form.end_date.label }}
-            {{ date_form.end_date(class="form-control") }}
-            {% for error in date_form.end_date.errors %}
-                <span class="error">{{ error }}</span>
-            {% endfor %}
-        </div>
-        {{ date_form.submit }}
-    </form>
+    {% include "date_form.html" %}
 
-    <form action="" method="post" id="delta-form">
-    <div>
-        {{ delta_form.hidden_tag() }}
-        {{ delta_form.value.label }}
-        {{ delta_form.value }}
-        {{ delta_form.type.label }}
-        {{ delta_form.type }}
-        {{ delta_form.submit }}
-    </div>
-    </form>
+    {% include "delta_form.html" %}
 
     <h4>История</h4>
     <table class="table table-striped table-bordered table-hover table-sm">

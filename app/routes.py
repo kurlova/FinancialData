@@ -6,6 +6,7 @@ from flask import render_template, jsonify, redirect, url_for, request, flash
 
 from app.models import *
 from app.forms import DateForm, DeltaForm
+from app.utils import generate_sequences, find_min_intervals
 
 
 @app.route("/", methods=["GET"])
@@ -77,8 +78,22 @@ def analytics(ticker_name):
     return render_template("analytics.html", ticker=ticker, first=first, second=second)
 
 
-@app.route("/<ticker_name>/delta", methods=["GET"])
+@app.route("/<ticker_name>/delta", methods=["GET", "POST"])
 def delta(ticker_name):
     value = request.args.get("value")
+    value = int(value)
     delta_type = request.args.get("type")
-    return 'ok'
+    print(value, delta_type)
+    ticker = Ticker.query.filter_by(name=ticker_name).first()
+    history_data = History.query.filter_by(ticker_id=ticker.id).order_by(History.date.asc()).all()
+    all_sequences_gen = generate_sequences(history_data, delta_type)
+    min_intervals = find_min_intervals(all_sequences_gen, value)
+
+    delta_form = DeltaForm()
+    if delta_form.validate_on_submit():
+        delta_val = delta_form.value.data
+        delta_type = delta_form.type.data
+        return redirect(url_for("delta", ticker_name=ticker_name, value=delta_val, type=delta_type))
+
+    return render_template("intervals.html", ticker=ticker, value=value, type=delta_type,
+                           intervals=min_intervals, delta_form=delta_form)
