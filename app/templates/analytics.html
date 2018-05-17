@@ -32,11 +32,11 @@
         </tr>
         <tr class="table-info">
             <td></td>
-            <td>{{ (first.open - second.open) | round(2, "common") | abs }}</td>
-            <td>{{ (first.high - second.high) | round(2, "common") | abs }}</td>
-            <td>{{ (first.low - second.low) | round(2, "common") | abs }}</td>
-            <td>{{ (first.close - second.close) | round(2, "common") | abs }}</td>
-            <td>{{ (first.volume - second.volume) | abs }}</td>
+            <td>{{ difference.open }}</td>
+            <td>{{ difference.high }}</td>
+            <td>{{ difference.low }}</td>
+            <td>{{ difference.close }}</td>
+            <td>{{ difference.volume }}</td>
         </tr>
         </tbody>
     </table>

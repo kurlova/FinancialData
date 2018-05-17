@@ -4,16 +4,16 @@ from wtforms import SubmitField, DateField, SelectField, IntegerField, validator
 from app.utils import DATETIME_FORMAT
 
 
-INCORRECT_DATA_MESSAGE = "Введите корректную дату"
+INCORRECT_DATE_MESSAGE = "Введите корректную дату"
 
 
 class DateForm(FlaskForm):
     start_date = DateField("Начальная дата",
-                           validators=[validators.DataRequired(message=INCORRECT_DATA_MESSAGE)],
-                           format=DATETIME_FORMAT)
+                           validators=[validators.DataRequired(message=INCORRECT_DATE_MESSAGE)],
+                           format=DATETIME_FORMAT, render_kw={"placeholder": "yyyy/mm/dd"})
     end_date = DateField("Конечная дата",
-                         validators=[validators.DataRequired(message=INCORRECT_DATA_MESSAGE)],
-                         format=DATETIME_FORMAT)
+                         validators=[validators.DataRequired(message=INCORRECT_DATE_MESSAGE)],
+                         format=DATETIME_FORMAT, render_kw={"placeholder": "yyyy/mm/dd"})
     submit = SubmitField("Отправить")
 
 

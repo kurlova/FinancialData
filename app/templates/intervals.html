@@ -3,9 +3,19 @@
 {% block body %}
     <h3>Минимальные интервалы для изменения цены {{ ticker.name }} ({{ type }}) на значение {{ value }}</h3>
 
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flash-messages">
+                {% for message in messages %}
+                    <li class="error">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
     <ul>
     {% for interval in intervals %}
-        <li><b>{{ interval.delta | round(2, "common")}}</b>, {{ interval.start }} - {{ interval.end }} ({{ interval.length }} дней)</li>
+        <li><b>{{ interval.delta }}</b>, {{ interval.start }} - {{ interval.end }} ({{ interval.length }} дней)</li>
     {% endfor %}
     </ul>
 
