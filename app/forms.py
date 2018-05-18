@@ -10,10 +10,10 @@ INCORRECT_DATE_MESSAGE = "Введите корректную дату"
 class DateForm(FlaskForm):
     start_date = DateField("Начальная дата",
                            validators=[validators.DataRequired(message=INCORRECT_DATE_MESSAGE)],
-                           format=DATETIME_FORMAT, render_kw={"placeholder": "yyyy/mm/dd"})
+                           format=DATETIME_FORMAT, render_kw={"placeholder": DATETIME_FORMAT})
     end_date = DateField("Конечная дата",
                          validators=[validators.DataRequired(message=INCORRECT_DATE_MESSAGE)],
-                         format=DATETIME_FORMAT, render_kw={"placeholder": "yyyy/mm/dd"})
+                         format=DATETIME_FORMAT, render_kw={"placeholder": DATETIME_FORMAT})
     submit = SubmitField("Отправить")
 
 

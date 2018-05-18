@@ -9,6 +9,13 @@ class Ticker(db.Model):
     insiders = db.relationship("Insider", backref="ticker", cascade="delete")
     history = db.relationship("History", backref="ticker", cascade="delete")
 
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "name": self.name,
+        }
+        return data
+
     def __repr__(self):
         return f"<Ticker: {self.name}>"
 
@@ -25,8 +32,21 @@ class History(db.Model):
     volume = db.Column(db.Integer)
     ticker_id = db.Column(db.Integer, db.ForeignKey("tickers.id", ondelete="CASCADE"), nullable=False)
 
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "date": self.date,
+            "open": self.open,
+            "high": self.high,
+            "low": self.low,
+            "close": self.close,
+            "volume": self.volume,
+            "ticker_id": self.ticker_id
+        }
+        return data
+
     def __repr__(self):
-        return f"<History object: {self.date}-{self.open}-{self.high}-{self.low}-{self.close}-{self.volume}"\
+        return f"<History object: {self.date}-{self.open}-{self.high}-{self.low}-{self.close}-{self.volume}" \
                f"{self.ticker_id}>"
 
 
@@ -44,6 +64,22 @@ class Insider(db.Model):
     last_price = db.Column(db.Float(precision=4))
     shares_held = db.Column(db.Integer)
     ticker_id = db.Column(db.Integer, db.ForeignKey("tickers.id", ondelete="CASCADE"), nullable=False)
+
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "inner_id": self.inner_id,
+            "relation": self.relation,
+            "last_date": self.last_date,
+            "transaction_type": self.transaction_type,
+            "owner_type": self.owner_type,
+            "shares_traded": self.shares_traded,
+            "last_price": self.last_price,
+            "shares_held": self.shares_held,
+            "ticker_id": self.ticker_id
+        }
+        return data
 
     def __repr__(self):
         return f"<InsiderData object: {self.name}-{self.inner_id}-{self.relation}-{self.last_date}-" \

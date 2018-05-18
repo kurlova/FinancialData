@@ -1,3 +1,8 @@
+import datetime
+
+from dateutil.relativedelta import relativedelta
+
+
 DATETIME_FORMAT = "%m/%d/%Y"
 
 
@@ -53,3 +58,23 @@ def find_shortest_intervals(history_data, delta_type, threshold):
     min_days = min(interval["length"] for interval in intervals)
     shortest = [interval for interval in intervals if interval["length"] == min_days]
     return shortest
+
+
+def calc_dict_difference(first, second, excluded_keys):
+    """
+    Вычитает значения одного словаря из другого, пропуская указанные ключи
+    :param first: словарь, из которого вычитаем значения
+    :param second: словарь, который вычитаем
+    :param excluded_keys: ключи, которые не учитываются
+    :return:
+    """
+    return {key: round(first[key] - second.get(key, 0), 2) for key in first.keys() if key not in excluded_keys}
+
+
+def three_months_from_now():
+    """
+    Считает дату три месяца назад от сегодняшнего дня
+    :return: соответствующий datetime
+    """
+    today = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    return today - relativedelta(months=3)
