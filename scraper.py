@@ -1,14 +1,25 @@
 import datetime
 import re
 import requests
+import threading
+import traceback
+import sys
 
 from bs4 import BeautifulSoup as bs
+from queue import Queue
+import time
 
 from app import db
 from app.models import History, Insider, Ticker
 
 
 TICKERS_FILENAME = "tickers.txt"
+
+
+def save_to_db(object, lock):
+    with lock:
+        db.session.add(object)
+        db.session.commit()
 
 
 class ScrapingManager:
@@ -26,15 +37,9 @@ class ScrapingManager:
         with open(TICKERS_FILENAME, "r") as f:
             tickers = f.readlines()
 
-        for ticker in tickers:
-            yield ticker.rstrip("\n")
+        return [ticker.rstrip('\n') for ticker in tickers]
 
-    @staticmethod
-    def save_to_db(object):
-        db.session.add(object)
-        db.session.commit()
-
-    def get_or_create_new(self, modelname, **kwargs):
+    def get_or_create_ticker(self, **kwargs):
         """
         Если запись уже присутствует в базе данных, возвращаем ее идентификатор
         В противном случае создаем запись и рекурсивно получаем ее идентификатор
@@ -43,22 +48,43 @@ class ScrapingManager:
         :param kwargs: поля, которые идентифицируют запись
         :return: id сущесвтующей записи или вызов самой себя для поиска только что созданной записи
         """
-        obj = modelname.query.filter_by(**kwargs).first()
+        obj = Ticker.query.filter_by(**kwargs).first()
         if obj:
             return obj
         else:
-            self.save_to_db(modelname(**kwargs))
-            self.get_or_create_new(modelname, **kwargs)
+            save_to_db(Ticker(**kwargs), db_writer_lock)
+            return self.get_or_create_ticker(**kwargs)
 
-    def scrape(self):
-        for ticker in self.tickers:
-            # добавить ticker в базу данных
-            ticker_obj = self.get_or_create_new(Ticker, name=ticker)
+    def assign_parallel_processes(self):
+        for thread in range(self.threads):
+            t = threading.Thread(target=self.do_work)
+            t.daemon = True
+            t.start()
 
+        try:
+            for ticker in self.tickers:
+                q.put(ticker)
+            q.join()
+        except KeyboardInterrupt:
+            sys.exit(1)
+
+    def do_work(self):
+        while True:
+            ticker = q.get()
+            self.process_ticker(ticker)
+            q.task_done()
+
+    def process_ticker(self, ticker):
+        try:
+            print(threading.current_thread().name, ticker)
+            ticker_obj = self.get_or_create_ticker(name=ticker)
             history_scraper = HistoryScraper(ticker=ticker_obj)
             history_scraper.process()
             trader_scraper = InsiderTradesScraper(ticker=ticker_obj)
             trader_scraper.process()
+        except Exception:
+            print("Processed with error:")
+            traceback.print_exc()
 
 
 class BaseScraper:
@@ -114,9 +140,6 @@ class BaseScraper:
         else:
             return None
 
-    def get_ticker_id(self):
-        pass
-
 
 class HistoryScraper(BaseScraper):
     url_path = 'historical'
@@ -126,7 +149,11 @@ class HistoryScraper(BaseScraper):
 
     def process(self):
         url = self.get_start_url(self.url_path)
-        self.process_page(url)
+        try:
+            self.process_page(url)
+        except Exception as e:
+            print(f"Exception occured on page {url}")
+            traceback.print_exc()
 
     def process_page(self, url):
         response = requests.get(url, headers=self.headers)
@@ -151,8 +178,7 @@ class HistoryScraper(BaseScraper):
 
             history_obj = History(date=date, open=open, high=high, low=low, close=close, volume=volume,
                                   ticker_id=self.ticker_id)
-            db.session.add(history_obj)
-            db.session.commit()
+            save_to_db(history_obj, lock=db_writer_lock)
 
 
 class InsiderTradesScraper(BaseScraper):
@@ -164,7 +190,11 @@ class InsiderTradesScraper(BaseScraper):
 
     def process(self):
         url = self.get_start_url(self.url_path)
-        self.process_page(url)
+        try:
+            self.process_page(url)
+        except Exception as e:
+            print(f"Exception occured on page {url}")
+            traceback.print_exc()
 
     def process_page(self, url):
         response = requests.get(url, headers=self.headers)
@@ -192,8 +222,7 @@ class InsiderTradesScraper(BaseScraper):
             insider_obj = Insider(name=name, inner_id=inner_id, relation=relation, last_date=last_date,
                                   transaction_type=transaction_type, owner_type=owner_type, shares_traded=shares_traded,
                                   last_price=last_price, shares_held=shares_held, ticker_id=self.ticker_id)
-            db.session.add(insider_obj)
-            db.session.commit()
+            save_to_db(insider_obj, lock=db_writer_lock)
 
         pager_ul = soup.find("ul", {"id": "pager"})
         last_span = pager_ul.find_all("span")[-1]
@@ -214,6 +243,10 @@ class InsiderTradesScraper(BaseScraper):
 
 
 if __name__ == "__main__":
-    sm = ScrapingManager()
-    sm.scrape()
+    start = time.time()
+    q = Queue()
+    db_writer_lock = threading.Lock()
+    sm = ScrapingManager(threads=3)
+    sm.assign_parallel_processes()
+    print(time.time() - start)
 

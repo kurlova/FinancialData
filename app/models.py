@@ -26,7 +26,8 @@ class History(db.Model):
     ticker_id = db.Column(db.Integer, db.ForeignKey("tickers.id", ondelete="CASCADE"), nullable=False)
 
     def __repr__(self):
-        return f"<History object: {self.date}-{self.open}-{self.high}-{self.low}-{self.close}-{self.volume}>"
+        return f"<History object: {self.date}-{self.open}-{self.high}-{self.low}-{self.close}-{self.volume}"\
+               f"{self.ticker_id}>"
 
 
 class Insider(db.Model):
@@ -45,5 +46,6 @@ class Insider(db.Model):
     ticker_id = db.Column(db.Integer, db.ForeignKey("tickers.id", ondelete="CASCADE"), nullable=False)
 
     def __repr__(self):
-        return f"<InsiderData object: {self.insider}-{self.insider_id}-{self.relation}-{self.last_date}-" \
-               f"{self.trans_type}-{self.owner_type}-{self.shares_traded}-{self.last_price}-{self.shares_held}>"
+        return f"<InsiderData object: {self.name}-{self.inner_id}-{self.relation}-{self.last_date}-" \
+               f"{self.transaction_type}-{self.owner_type}-{self.shares_traded}-{self.last_price}-{self.shares_held}" \
+               f"{self.ticker_id}>"
