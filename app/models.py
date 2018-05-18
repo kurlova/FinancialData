@@ -55,33 +55,51 @@ class Insider(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    inner_id = db.Column(db.Integer)
     relation = db.Column(db.String(100))
+    inner_id = db.Column(db.Integer)
+    ticker_id = db.Column(db.Integer, db.ForeignKey("tickers.id", ondelete="CASCADE"), nullable=False)
+    trades = db.relationship("InsiderTrade", backref="insider", cascade="delete")
+
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "relation": self.relation,
+            "inner_id": self.inner_id,
+            "ticker_id": self.ticker_id,
+            "trades": [trade.to_dict() for trade in self.trades]
+        }
+        return data
+
+    def __repr__(self):
+        return f"<Insider object: {self.id} - {self.name}>"
+
+
+class InsiderTrade(db.Model):
+    __tablename__ = "insider_trades"
+
+    id = db.Column(db.Integer, primary_key=True)
+    insider_id = db.Column(db.Integer, db.ForeignKey("insiders.id", ondelete="CASCADE"), nullable=False)
     last_date = db.Column(db.DateTime)
     transaction_type = db.Column(db.String(100))
     owner_type = db.Column(db.String(20))
     shares_traded = db.Column(db.Integer)
     last_price = db.Column(db.Float(precision=4))
     shares_held = db.Column(db.Integer)
-    ticker_id = db.Column(db.Integer, db.ForeignKey("tickers.id", ondelete="CASCADE"), nullable=False)
 
     def to_dict(self):
         data = {
             "id": self.id,
-            "name": self.name,
-            "inner_id": self.inner_id,
-            "relation": self.relation,
+            "insider_id": self.insider_id,
             "last_date": self.last_date,
             "transaction_type": self.transaction_type,
             "owner_type": self.owner_type,
             "shares_traded": self.shares_traded,
             "last_price": self.last_price,
             "shares_held": self.shares_held,
-            "ticker_id": self.ticker_id
         }
         return data
 
     def __repr__(self):
-        return f"<InsiderData object: {self.name}-{self.inner_id}-{self.relation}-{self.last_date}-" \
+        return f"<InsiderTradeData object: {self.last_date}-" \
                f"{self.transaction_type}-{self.owner_type}-{self.shares_traded}-{self.last_price}-{self.shares_held}" \
-               f"{self.ticker_id}>"

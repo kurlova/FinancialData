@@ -10,16 +10,33 @@ from queue import Queue
 import time
 
 from app import db
-from app.models import History, Insider, Ticker
+from app.models import History, Ticker, Insider, InsiderTrade
 
 
 TICKERS_FILENAME = "tickers.txt"
 
 
-def save_to_db(object, lock):
-    with lock:
+def save_to_db(object):
+    with db_writer_lock:
         db.session.add(object)
         db.session.commit()
+
+
+def get_or_create_object(modelname, **kwargs):
+    """
+    Если запись уже присутствует в базе данных, возвращаем ее идентификатор
+    В противном случае создаем запись и рекурсивно получаем ее идентификатор
+
+    :param modelname: модель, по которой ищем запись
+    :param kwargs: поля, которые идентифицируют запись
+    :return: id сущесвтующей записи или вызов самой себя для поиска только что созданной записи
+    """
+    obj = modelname.query.filter_by(**kwargs).first()
+    if obj:
+        return obj
+    else:
+        save_to_db(modelname(**kwargs))
+        return get_or_create_object(modelname, **kwargs)
 
 
 class ScrapingManager:
@@ -38,22 +55,6 @@ class ScrapingManager:
             tickers = f.readlines()
 
         return [ticker.rstrip('\n') for ticker in tickers]
-
-    def get_or_create_ticker(self, **kwargs):
-        """
-        Если запись уже присутствует в базе данных, возвращаем ее идентификатор
-        В противном случае создаем запись и рекурсивно получаем ее идентификатор
-
-        :param modelname: модель, по которой ищем запись
-        :param kwargs: поля, которые идентифицируют запись
-        :return: id сущесвтующей записи или вызов самой себя для поиска только что созданной записи
-        """
-        obj = Ticker.query.filter_by(**kwargs).first()
-        if obj:
-            return obj
-        else:
-            save_to_db(Ticker(**kwargs), db_writer_lock)
-            return self.get_or_create_ticker(**kwargs)
 
     def assign_parallel_processes(self):
         for thread in range(self.threads):
@@ -77,7 +78,7 @@ class ScrapingManager:
     def process_ticker(self, ticker):
         try:
             print(threading.current_thread().name, ticker)
-            ticker_obj = self.get_or_create_ticker(name=ticker)
+            ticker_obj = get_or_create_object(Ticker, name=ticker)
             history_scraper = HistoryScraper(ticker=ticker_obj)
             history_scraper.process()
             trader_scraper = InsiderTradesScraper(ticker=ticker_obj)
@@ -149,6 +150,7 @@ class HistoryScraper(BaseScraper):
 
     def process(self):
         url = self.get_start_url(self.url_path)
+
         try:
             self.process_page(url)
         except Exception as e:
@@ -178,7 +180,7 @@ class HistoryScraper(BaseScraper):
 
             history_obj = History(date=date, open=open, high=high, low=low, close=close, volume=volume,
                                   ticker_id=self.ticker_id)
-            save_to_db(history_obj, lock=db_writer_lock)
+            save_to_db(history_obj)
 
 
 class InsiderTradesScraper(BaseScraper):
@@ -190,6 +192,7 @@ class InsiderTradesScraper(BaseScraper):
 
     def process(self):
         url = self.get_start_url(self.url_path)
+
         try:
             self.process_page(url)
         except Exception as e:
@@ -219,10 +222,12 @@ class InsiderTradesScraper(BaseScraper):
             last_price = self.convert_to_float(cells[6].text)
             shares_held = self.convert_to_int(cells[7].text)
 
-            insider_obj = Insider(name=name, inner_id=inner_id, relation=relation, last_date=last_date,
+            insider_obj = get_or_create_object(Insider, name=name, relation=relation, inner_id=inner_id,
+                                               ticker_id=self.ticker_id)
+            insider_trade_obj = InsiderTrade(insider_id=insider_obj.id, last_date=last_date,
                                   transaction_type=transaction_type, owner_type=owner_type, shares_traded=shares_traded,
-                                  last_price=last_price, shares_held=shares_held, ticker_id=self.ticker_id)
-            save_to_db(insider_obj, lock=db_writer_lock)
+                                  last_price=last_price, shares_held=shares_held)
+            save_to_db(insider_trade_obj)
 
         pager_ul = soup.find("ul", {"id": "pager"})
         last_span = pager_ul.find_all("span")[-1]
@@ -230,7 +235,6 @@ class InsiderTradesScraper(BaseScraper):
         next_page = last_span_parent.nextSibling
 
         if not next_page:
-            print("Pages are over")
             return
 
         next_page = next_page.find("a")["href"]

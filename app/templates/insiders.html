@@ -17,19 +17,22 @@
         </thead>
         <tbody>
         {% for insider in insiders %}
-            <tr>
-                <td><a href="{{ url_for("insider", ticker_name=ticker.name,
-                                                   insider_name=insider.name,
-                                                   insider_inner_id=insider.inner_id)
-                        }}">{{ insider.name }}</a></td>
-                <td>{{ insider.relation }}</td>
-                <td>{{ insider.last_date | datetimeformat }}</td>
-                <td>{{ insider.transaction_type }}</td>
-                <td>{{ insider.owner_type }}</td>
-                <td>{{ insider.shares_traded }}</td>
-                <td>{{ insider.last_price }}</td>
-                <td>{{ insider.shares_held }}</td>
-            </tr>
+            {% for trade in insider.trades %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for("insider", ticker_name=ticker.name, insider_name=insider.name) }}">
+                            {{ insider.name }}
+                        </a>
+                    </td>
+                    <td>{{ insider.relation }}</td>
+                    <td>{{ trade.last_date | datetimeformat }}</td>
+                    <td>{{ trade.transaction_type }}</td>
+                    <td>{{ trade.owner_type }}</td>
+                    <td>{{ trade.shares_traded }}</td>
+                    <td>{{ trade.last_price }}</td>
+                    <td>{{ trade.shares_held }}</td>
+                </tr>
+            {% endfor %}
         {% endfor %}
         </tbody>
     </table>

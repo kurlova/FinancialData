@@ -3,7 +3,7 @@ import datetime
 from flask import render_template, redirect, url_for, request, flash
 
 from app import app
-from app.models import *
+from app.models import Ticker, History, Insider
 from app.forms import DateForm, DeltaForm
 from app.utils import find_shortest_intervals, calc_dict_difference, three_months_from_now
 
@@ -38,7 +38,7 @@ def ticker(ticker_name):
                            date_form=date_form, delta_form=delta_form)
 
 
-@app.route("/<ticker_name>/insiders", methods=["GET"])
+@app.route("/<ticker_name>/insider", methods=["GET"])
 def insiders(ticker_name):
     ticker = Ticker.query.filter_by(name=ticker_name).first()
     insiders = Insider.query.filter_by(ticker_id=ticker.id).all()
@@ -46,12 +46,12 @@ def insiders(ticker_name):
     return render_template("insiders.html", ticker=ticker, insiders=insiders)
 
 
-@app.route("/<ticker_name>/insiders/<insider_name>", methods=["GET"])
+@app.route("/<ticker_name>/insider/<insider_name>", methods=["GET"])
 def insider(ticker_name, insider_name):
     ticker = Ticker.query.filter_by(name=ticker_name).first()
-    insider_data = Insider.query.filter_by(name=insider_name).all()
-    insider_data = [insider.to_dict() for insider in insider_data]
-    return render_template("insider_data.html", ticker=ticker, insider_data=insider_data)
+    insider_data = Insider.query.filter_by(name=insider_name).first()
+    insider_data = insider_data.to_dict()
+    return render_template("insider_data.html", ticker=ticker, insider=insider_data)
 
 
 @app.route("/<ticker_name>/analytics", methods=["GET"])
@@ -89,7 +89,7 @@ def delta(ticker_name):
     try:
         value = int(value)
     except ValueError:
-        flash("Недопустимый атрибут")
+        flash("Недопустимый тип атрибута value")
         return redirect(url_for("ticker", ticker_name=ticker_name))
 
     delta_type = request.args.get("type")
@@ -97,7 +97,7 @@ def delta(ticker_name):
     history_data = History.query.filter_by(ticker_id=ticker.id).order_by(History.date.asc()).all()
 
     if not hasattr(history_data[0], delta_type):
-        flash("Недопустимый атрибут")
+        flash(f"Недопустимый атрибут {delta_type}")
         return redirect(url_for("ticker", ticker_name=ticker_name))
 
     shortest_intervals = find_shortest_intervals(history_data=history_data, delta_type=delta_type, threshold=value)
