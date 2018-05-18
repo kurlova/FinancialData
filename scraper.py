@@ -4,6 +4,7 @@ import requests
 import threading
 import traceback
 import sys
+import os
 
 from bs4 import BeautifulSoup as bs
 from queue import Queue
@@ -13,7 +14,7 @@ from app import db
 from app.models import History, Ticker, Insider, InsiderTrade
 
 
-TICKERS_FILENAME = "tickers.txt"
+TICKERS_FILENAME = os.path.join(os.getcwd(), "tickers.txt")
 
 
 def save_to_db(object):
