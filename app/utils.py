@@ -55,9 +55,11 @@ def find_shortest_intervals(history_data, delta_type, threshold):
                                       end=subsequence[-1].date,
                                       length=(subsequence[-1].date - subsequence[0].date).days))
 
-    min_days = min(interval["length"] for interval in intervals)
-    shortest = [interval for interval in intervals if interval["length"] == min_days]
-    return shortest
+    if len(intervals) > 0:
+        min_days = min(interval["length"] for interval in intervals)
+        return [interval for interval in intervals if interval["length"] == min_days]
+
+    return []
 
 
 def calc_dict_difference(first, second, excluded_keys):

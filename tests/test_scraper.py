@@ -3,13 +3,14 @@ from unittest import TestCase
 from freezegun import freeze_time
 
 from scraper import BaseScraper
+from app.models import Ticker
 
 
 class TestBaseScraper(TestCase):
-    ticker = "CVX"
+    ticker = Ticker(id=0, name="SOMEABBR")
 
     def setUp(self):
-        self.scraper = BaseScraper(ticker=self.ticker)
+        self.scraper = BaseScraper(ticker_obj=self.ticker)
 
     def test_convert_fulldate_to_datetime(self):
         fulldate = "05/11/2018"
