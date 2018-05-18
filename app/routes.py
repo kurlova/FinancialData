@@ -1,11 +1,23 @@
 import datetime
 
-from flask import render_template, redirect, url_for, request, flash
+from flask import render_template, redirect, url_for, request, flash, abort
 
 from app import app
 from app.models import Ticker, History, Insider
 from app.forms import DateForm, DeltaForm
 from app.utils import find_shortest_intervals, calc_dict_difference, three_months_from_now
+
+
+def get_or_404(modelname, **kwargs):
+    obj = modelname.query.filter_by(**kwargs).first()
+    if not obj:
+        return abort(404)
+    return obj
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 
 @app.route("/", methods=["GET"])
@@ -18,7 +30,7 @@ def index():
 @app.route("/<ticker_name>", methods=["GET", "POST"])
 def ticker(ticker_name):
     date = three_months_from_now()
-    ticker = Ticker.query.filter_by(name=ticker_name).first()
+    ticker = get_or_404(Ticker, name=ticker_name)
     history = History.query.filter(History.ticker_id == ticker.id, History.date >= date).all()
     history = [row.to_dict() for row in history]
 
@@ -40,7 +52,7 @@ def ticker(ticker_name):
 
 @app.route("/<ticker_name>/insider", methods=["GET"])
 def insiders(ticker_name):
-    ticker = Ticker.query.filter_by(name=ticker_name).first()
+    ticker = get_or_404(Ticker, name=ticker_name)
     insiders = Insider.query.filter_by(ticker_id=ticker.id).all()
     insiders = [insider.to_dict() for insider in insiders]
     return render_template("insiders.html", ticker=ticker, insiders=insiders)
@@ -48,15 +60,15 @@ def insiders(ticker_name):
 
 @app.route("/<ticker_name>/insider/<insider_name>", methods=["GET"])
 def insider(ticker_name, insider_name):
-    ticker = Ticker.query.filter_by(name=ticker_name).first()
-    insider_data = Insider.query.filter_by(name=insider_name).first()
+    ticker = get_or_404(Ticker, name=ticker_name)
+    insider_data = get_or_404(Insider, name=insider_name)
     insider_data = insider_data.to_dict()
     return render_template("insider_data.html", ticker=ticker, insider=insider_data)
 
 
 @app.route("/<ticker_name>/analytics", methods=["GET"])
 def analytics(ticker_name):
-    ticker = Ticker.query.filter_by(name=ticker_name).first()
+    ticker = get_or_404(Ticker, name=ticker_name)
     start_date = request.args.get("date_from")
     end_date = request.args.get("date_to")
 
@@ -67,13 +79,8 @@ def analytics(ticker_name):
         flash("Введенные даты не корректны")
         return redirect(url_for("ticker", ticker_name=ticker_name))
 
-    first = History.query.filter_by(date=start_date).first()
-    second = History.query.filter_by(date=end_date).first()
-
-    if not first or not second:
-        flash("Одной из дат нет в базе данных.")
-        return redirect(url_for("ticker", ticker_name=ticker_name))
-
+    first = get_or_404(History, date=start_date)
+    second = get_or_404(History, date=end_date)
     first = first.to_dict()
     second = second.to_dict()
     difference = calc_dict_difference(first, second, ["date"])
@@ -93,7 +100,7 @@ def delta(ticker_name):
         return redirect(url_for("ticker", ticker_name=ticker_name))
 
     delta_type = request.args.get("type")
-    ticker = Ticker.query.filter_by(name=ticker_name).first()
+    ticker = get_or_404(Ticker, name=ticker_name)
     history_data = History.query.filter_by(ticker_id=ticker.id).order_by(History.date.asc()).all()
 
     if not hasattr(history_data[0], delta_type):
