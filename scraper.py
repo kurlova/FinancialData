@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import re
 import requests
@@ -41,7 +42,7 @@ def get_or_create_object(modelname, **kwargs):
 
 
 class ScrapingManager:
-    def __init__(self, threads=1):
+    def __init__(self, threads):
         self.threads = threads
 
     @property
@@ -248,10 +249,19 @@ class InsiderTradesScraper(BaseScraper):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Укажите число потоков')
+    parser.add_argument('--threads', type=int)
+    args = parser.parse_args()
+
+    if args.threads:
+        threads_num = args.threads
+    else:
+        threads_num = 3
+
     start = time.time()
     q = Queue()
     db_writer_lock = threading.Lock()
-    sm = ScrapingManager(threads=3)
+    sm = ScrapingManager(threads_num)
     sm.assign_parallel_processes()
     print(time.time() - start)
 
