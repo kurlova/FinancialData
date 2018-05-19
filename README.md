@@ -11,13 +11,15 @@
 зайти в контейнер приложения:
 
 ```
-docker exec -t <"python app.py" container id> bash
+docker exec -it <"python app.py" container id> bash
 
 cd app
 ```
 
 написать:
 ```
+flask db init
+flask db migrate
 flask db upgrade
 python scraper.py --threads=N
 ```
