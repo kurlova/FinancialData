@@ -21,10 +21,8 @@ cd app
 flask db init
 flask db migrate
 flask db upgrade
-python scraper.py --threads=N
+python scraper.py --threads=N (или просто python scraper.py)
 ```
-или просто
-```python scraper.py```
 
 подождать пока скрипт выполнится, выйти из контейнера:
 ```exit```
